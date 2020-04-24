@@ -23,11 +23,16 @@ for line in io.lines("config.txt") do
 	lineData = split(line, " ")
 	Fedi[lineData[1]] = lineData[2]
 end
-print(Fedi.token)
 
 function Fedi.postStatus(status, media, poll, pollExpiration)
-	curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"status=" .. status}, Fedi.domain .. "/api/v1/statuses")
+	-- Handle media uploading
+	if (media ~= nil) then
+		local mediaData = json.decode(escapeFix(curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"file=@" .. media}, Fedi.domain .. "/api/v1/media")))
+		curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"status=" .. status, "media_ids[]=" .. mediaData["id"]}, Fedi.domain .. "/api/v1/statuses")
+	else
+		curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"status=" .. status}, Fedi.domain .. "/api/v1/statuses")
+	end
 end
 
-Fedi.postStatus("Testing from API...")
+Fedi.postStatus("Boomers", "boomer.png")
 
