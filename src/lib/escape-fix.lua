@@ -1,4 +1,4 @@
-function escapeFix()
+function escapeFix(data)
 	newData = ""
 	for i=1,string.len(data) do
 		char = string.sub(data, i, i)
