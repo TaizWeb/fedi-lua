@@ -25,14 +25,18 @@ for line in io.lines("config.txt") do
 end
 
 function Fedi.postStatus(status, media, poll, pollExpiration)
+	headers = {"Authorization: Bearer " .. Fedi.token}
+	formData = {"status=" .. status}
 	-- Handle media uploading
 	if (media ~= nil) then
-		local mediaData = json.decode(escapeFix(curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"file=@" .. media}, Fedi.domain .. "/api/v1/media")))
-		curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"status=" .. status, "media_ids[]=" .. mediaData["id"]}, Fedi.domain .. "/api/v1/statuses")
-	else
-		curl("POST", {"Authorization: Bearer " .. Fedi.token}, {"status=" .. status}, Fedi.domain .. "/api/v1/statuses")
+		for i=1,#media do
+			local curlData = json.decode(escapeFix(curl("POST", headers, {"file=@" .. media[i]}, Fedi.domain .. "/api/v1/media")))
+			local mediaData = "media_ids[]=" .. curlData["id"]
+			formData[#formData+1] = mediaData
+		end
 	end
+	print(curl("POST", headers, formData, Fedi.domain .. "/api/v1/statuses"))
 end
 
-Fedi.postStatus("Boomers", "boomer.png")
+Fedi.postStatus("Multiple media test", {"cirno.jpg", "boomer.png"})
 
