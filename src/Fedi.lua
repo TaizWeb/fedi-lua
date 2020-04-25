@@ -19,24 +19,39 @@ function split(string, char)
 end
 
 Fedi = {}
+-- Loading the configuration data
 for line in io.lines("config.txt") do
 	lineData = split(line, " ")
 	Fedi[lineData[1]] = lineData[2]
 end
 
-function Fedi.postStatus(status, media, poll, pollExpiration)
+-- Warning: For mastodon servers, you cannot use both media and poll in the same status
+function Fedi.postStatus(status, media, pollOptions, pollExpiration)
 	headers = {"Authorization: Bearer " .. Fedi.token}
 	formData = {"status=" .. status}
 	-- Handle media uploading
 	if (media ~= nil) then
 		for i=1,#media do
+			-- Upload media to server
 			local curlData = json.decode(escapeFix(curl("POST", headers, {"file=@" .. media[i]}, Fedi.domain .. "/api/v1/media")))
-			local mediaData = "media_ids[]=" .. curlData["id"]
-			formData[#formData+1] = mediaData
+			-- Get the id and add it to the formdata
+			formData[#formData+1] = "media_ids[]=" .. curlData["id"]
 		end
 	end
-	print(curl("POST", headers, formData, Fedi.domain .. "/api/v1/statuses"))
+
+	-- Handle poll data
+	if (pollOptions ~= nil and pollExpiration ~= nil) then
+		for i=1,#pollOptions do
+			formData[#formData+1] = "poll[options][]=" .. pollOptions[i]
+		end
+		formData[#formData+1] = "poll[expires_in]=" .. tostring(pollExpiration)
+	end
+
+	for i=1,#formData do
+		print(formData[i])
+	end
+	-- Send the request to the server and return the response data
+	return curl("POST", headers, formData, Fedi.domain .. "/api/v1/statuses")
 end
 
-Fedi.postStatus("Multiple media test", {"cirno.jpg", "boomer.png"})
 

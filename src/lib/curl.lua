@@ -12,7 +12,6 @@ function curl(request, headers, formdata, target)
 	-- Appending target
 	curlString = curlString .. target
 	-- Sending request
-	--print(curlString)
 	local data = io.popen(curlString)
 	local retData = data:read("*a")
 	data:close()
